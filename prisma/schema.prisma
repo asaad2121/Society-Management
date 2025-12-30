@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// =========================
+// USERS
+// =========================
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String   @unique
+  password      String
+  wing          String
+  houseNumber   String
+  societyNumber String
+
+  role          Role     @default(USER)
+
+  createdAt     DateTime @default(now())
+
+  announcements Announcement[]
+  bills         Bill[]
+
+  @@unique([wing, houseNumber]) // Optional: prevent duplicate units
+}
+
+
+// =========================
+// ANNOUNCEMENTS
+// =========================
+
+model Announcement {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  message   String
+
+  createdById String   @db.ObjectId
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =========================
+// BILLS
+// =========================
+
+model Bill {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  billNumber   String   @unique
+  description  String?
+
+  amount       Float
+  gst          Float
+  totalAmount  Float
+
+  billFrom     DateTime
+  billTo       DateTime
+  billDate     DateTime @default(now())
+  dueDate      DateTime
+
+  status       BillStatus @default(PENDING)
+
+  paidAt       DateTime?
+  paymentRef  String?
+
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+// =========================
+// ENUMS
+// =========================
+
+enum Role {
+  USER
+  MEMBER
+  SECRETARY
+  TREASURER
+  CHAIRMAN
+  ADMIN
+}
+
+enum BillStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
